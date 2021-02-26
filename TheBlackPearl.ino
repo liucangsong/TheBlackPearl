@@ -6,8 +6,8 @@
 
 #define DEBUG 1
 
-#define COLOR_ORDER RGB //灯的排列顺序，灯带 GRB，灯珠 RGB
-#define LED_COUNT 2 //灯泡数量
+#define COLOR_ORDER GRB //灯的排列顺序，灯带 GRB，灯珠 RGB
+#define LED_COUNT 10 //灯泡数量
 #define LED_DT 4    //D2 PIN 接线位置，Arduino 位置4对应D2 
 
 CRGBArray<LED_COUNT> leds;
@@ -66,7 +66,7 @@ void setup() {
       server.send(404, "text/plain", "FileNotFound");
   });
 
-  server.on("/rooms", handleRooms);
+  server.on("/room", handleRooms);
   
   server.begin();
 
@@ -90,18 +90,38 @@ void loop() {
   //leds[room1].setRGB(r++, g++, b++);
   //leds[room2].setRGB(r++, 255, 255);
   delay(20);
+  //leds[2].setRGB(255,255,255);
   LEDS.show();
 }
 
 void handleRooms() {
   int roomId = server.arg("roomId").toInt();
   int light = server.arg("light").toInt();
+  String hex = server.arg("color");
+  long rgb = (long) strtol( &hex[1], NULL, 16 );
   if(light == 1){
-    leds[roomId].setRGB(255,255,255);
+    //leds[roomId].setRGB(255,255,255);
+    leds[roomId].setColorCode(rgb);
+
+    DynamicJsonDocument doc(200); // <- 200 bytes in the heap
+    doc["success"] = true;
+    doc["light"] = 1;
+    String json;
+    serializeJson(doc, json);
+    
+    
   }else{
     leds[roomId].setRGB(0,0,0);
+    
+    DynamicJsonDocument doc(200); // <- 200 bytes in the heap
+    doc["success"] = true;
+    doc["light"] = 0;
+    String json;
+    serializeJson(doc, json);
+    
+    server.send(200, "application/json", json);
   }
-  server.send(200, "application/json", "{\"success\":true}");
+ 
 }
 
 class Light{

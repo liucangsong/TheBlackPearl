@@ -5,29 +5,81 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>黑珍珠号控制</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+  <style>
+    .boat{
+     /*   margin: 10px auto;
+        background-image: url("boat_bg.jpg");
+        background-repeat: no-repeat;
+        height: 313px;
+        width: 678px; */
+    }
+  </style>
 </head>
 <body>
-<div class="container-fluid">
-  <div class="row">
-    <nav class="navbar navbar-light bg-light col-lg-12">
-      <a class="navbar-brand" href="#">
-        黑珍珠号控制
-      </a>
-    </nav>
-    <div id="roomsApp" class="row col-12 p-3">
-      <div class="col-lg-3 col-sm-12" v-for="room in rooms">
-        <div class="card">
-          <h5 class="card-header"><span v-text="room.roomId+1">1</span>号房间</h5>
-          <div class="card-body" v-bind:class="{'bg-success' : room.light===1}">
-            <p>控制<span v-text="room.roomId+1">1</span>号房间电灯</p>
-            <a href="#" class="btn btn-primary" v-on:click.prevent="lightOnOff(room.roomId, 1)">开灯</a>
-            <a href="#" class="btn btn-primary" v-on:click.prevent="lightOnOff(room.roomId, 0)">关灯</a>
-          </div>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">
+    <img class="" height="30" src="logo.jpg" alt="黑珍珠">
+    黑珍珠号
+  </a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse"
+          data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+          aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="#">暖光</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">白光</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">彩虹</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">彩灯</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">高亮</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">中等</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">低亮</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="boat text-center">
+    <img src="boat_bg.jpg" class="img-fluid">
+  </div>
+</div>
+
+<div id="roomsApp" class="container mt-3">
+  <div class="mb-3 row">
+    <div class="col-sm-12 col-lg-3 m-auto" v-for="room in rooms">
+      <div class="card mb-4 box-shadow text-center" >
+        <h5 class="card-header"><span v-text="room.roomId+1">1</span>号房间</h5>
+        <div class="card-body m-auto">
+          <label> 选择颜色
+            <input type="color" v-model="room.color" >
+          </label>
+        </div>
+        <div class="card-footer">
+          <a href="#" class="btn btn-primary" v-on:click.prevent="lightOnOff(room.roomId, 1)">开灯</a>
+          <a href="#" class="btn btn-primary" v-on:click.prevent="lightOnOff(room.roomId, 0)">关灯</a>
         </div>
       </div>
     </div>
   </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
@@ -36,27 +88,57 @@
   let roomsApp = new Vue({
     el:'#roomsApp',
     data:{
-      rooms: [{roomId:0, light: 0}, {roomId:1, light: 0}]
+      rooms: [
+        {roomId:0, light: 0, color: "#ffffff"},
+        {roomId:1, light: 0, color: "#ffffff"},
+        {roomId:2, light: 0, color: "#ffffff"},
+        {roomId:3, light: 0, color: "#ffffff"},
+        {roomId:4, light: 0, color: "#ffffff"},
+        {roomId:5, light: 0, color: "#ffffff"},
+        {roomId:6, light: 0, color: "#ffffff"},
+        {roomId:7, light: 0, color: "#ffffff"},
+        {roomId:8, light: 0, color: "#ffffff"},
+        {roomId:9, light: 0, color: "#ffffff"}
+        ]
     },
     methods:{
-      lightOnOff: function (roomId, light){
-        let data = {roomId:roomId, light:light};
-        let this_ = this;
+      loadRooms: function (){
         $.ajax({
           url:'/rooms',
+          method:'GET',
+          dataType: 'JSON',
+          success: function (result){
+            console.log(result)
+            if (result.success){
+              this_.rooms = result.rooms;
+            } else {
+              console.log("加载失败");
+            }
+          }
+        });
+      },
+      lightOnOff: function (roomId, light){
+        let color = this.rooms[roomId].color;
+        let data = {roomId:roomId, light:light, color: color};
+        let this_ = this;
+        $.ajax({
+          url:'/room',
           method:'POST',
           data: data,
           dataType: 'JSON',
           success: function (result){
             console.log(result)
             if (result.success){
-              this_[roomId].light=light;
+              this_.rooms[roomId].light=light;
             } else {
               console.log("开灯失败");
             }
           }
         });
       }
+    },
+    created: function (){
+      this.loadRooms();
     }
   });
 </script>
