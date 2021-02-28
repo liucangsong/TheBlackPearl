@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>黑珍珠号控制</title>
+  <title>黑珍珠号控制器</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
   <style>
     .boat{
      /*   margin: 10px auto;
@@ -17,11 +18,15 @@
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar navbar-expand-lg navbar-light bg-light" id="navApp">
   <a class="navbar-brand" href="#">
     <img class="" height="30" src="logo.jpg" alt="黑珍珠">
-    黑珍珠号
   </a>
+  <a class="nav-link" href="#" v-on:click="colorTemperature(2600)">暖光</a>
+  <a class="nav-link" href="#" v-on:click="colorTemperature(6000)">白光</a>
+  <a class="nav-link" href="#" v-on:click="rainbow(200)">彩虹</a>
+  <a class="nav-link" href="#" v-on:click="lightOff()">关灯</a>
+
   <button class="navbar-toggler" type="button" data-toggle="collapse"
           data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
           aria-expanded="false" aria-label="Toggle navigation">
@@ -30,26 +35,14 @@
 
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
     <ul class="navbar-nav mr-auto">
-      <li class="nav-item active">
-        <a class="nav-link" href="#">暖光</a>
+      <li class="nav-item">
+        <a class="nav-link" href="#" v-on:click.prevent="setBright(200)">高亮</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">白光</a>
+        <a class="nav-link" href="#" v-on:click.prevent="setBright(100)">中等</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">彩虹</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">彩灯</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">高亮</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">中等</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">低亮</a>
+        <a class="nav-link" href="#" v-on:click.prevent="setBright(50)">低亮</a>
       </li>
     </ul>
   </div>
@@ -63,17 +56,31 @@
 
 <div id="roomsApp" class="container mt-3">
   <div class="mb-3 row">
-    <div class="col-sm-12 col-lg-3 m-auto" v-for="room in rooms">
+    <div class="col-6 col-lg-3 m-auto" v-for="light in lights">
       <div class="card mb-4 box-shadow text-center" >
-        <h5 class="card-header"><span v-text="room.roomId+1">1</span>号房间</h5>
         <div class="card-body m-auto">
-          <label> 选择颜色
-            <input type="color" v-model="room.color" >
-          </label>
+          #<span v-text="light.id">1</span>
+          <input type="color" v-model="light.color" v-on:change="lightOnOff(light.id, true)" >
+          <button class="btn-sm " v-bind:class="{'btn-primary':light.power}"
+             v-on:click.prevent="lightOnOff(light.id)">
+            <i class="fa fa-power-off"></i>
+          </button>
         </div>
-        <div class="card-footer">
-          <a href="#" class="btn btn-primary" v-on:click.prevent="lightOnOff(room.roomId, 1)">开灯</a>
-          <a href="#" class="btn btn-primary" v-on:click.prevent="lightOnOff(room.roomId, 0)">关灯</a>
+      </div>
+    </div>
+  </div>
+  <div class="mb-3 row">
+    <div class="col-6 col-lg-4 m-auto" v-for="(room, index) in rooms">
+      <div class="card mb-4 box-shadow text-center" >
+        <div class="card-header">
+          <span v-text="room.name"></span>
+        </div>
+        <div class="card-body m-auto">
+          <input type="color" v-model="room.color" v-on:change="roomOnOff(index, true)" >
+          <button class="btn-sm " v-bind:class="{'btn-primary':room.power}"
+                  v-on:click.prevent="roomOnOff(index)">
+            <i class="fa fa-power-off"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -85,42 +92,82 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 <script>
-  let roomsApp = new Vue({
-    el:'#roomsApp',
-    data:{
-      rooms: [
-        {roomId:0, light: 0, color: "#ffffff"},
-        {roomId:1, light: 0, color: "#ffffff"},
-        {roomId:2, light: 0, color: "#ffffff"},
-        {roomId:3, light: 0, color: "#ffffff"},
-        {roomId:4, light: 0, color: "#ffffff"},
-        {roomId:5, light: 0, color: "#ffffff"},
-        {roomId:6, light: 0, color: "#ffffff"},
-        {roomId:7, light: 0, color: "#ffffff"},
-        {roomId:8, light: 0, color: "#ffffff"},
-        {roomId:9, light: 0, color: "#ffffff"}
-        ]
-    },
-    methods:{
-      loadRooms: function (){
+  let navApp = new Vue({
+    el: '#navApp',
+    methods: {
+      //总关闭
+      lightOff: function (){
         $.ajax({
-          url:'/rooms',
-          method:'GET',
+          url:'/off',
+          method:'POST',
           dataType: 'JSON',
           success: function (result){
-            console.log(result)
-            if (result.success){
-              this_.rooms = result.rooms;
-            } else {
-              console.log("加载失败");
-            }
+            console.log(result);
+            roomsApp.loadLights();
           }
         });
       },
-      lightOnOff: function (roomId, light){
-        let color = this.rooms[roomId].color;
-        let data = {roomId:roomId, light:light, color: color};
+      //设置色温
+      colorTemperature: function (k){
+        $.ajax({
+          url:'/temperature',
+          method:'POST',
+          data: {temperature: k},
+          dataType: 'JSON',
+          success: function (result){
+            console.log(result);
+            roomsApp.loadLights();
+          }
+        });
+      },
+      //设置亮度
+      setBright: function (bright){
+        $.ajax({
+          url:'/bright',
+          method:'POST',
+          data: {bright: bright},
+          dataType: 'JSON',
+          success: function (result){
+            console.log(result);
+          }
+        });
+      },
+      rainbow: function (initialhue){
+        $.ajax({
+          url:'/rainbow',
+          method:'POST',
+          data: {initialhue: initialhue},
+          dataType: 'JSON',
+          success: function (result){
+            console.log(result);
+            roomsApp.loadLights();
+          }
+        });
+      }
+    }
+  });
+  let roomsApp = new Vue({
+    el:'#roomsApp',
+    data:{
+      lights: [
+        {id:0, power: false, color: "#ffffff"},
+        {id:1, power: false, color: "#ffffff"},
+        {id:2, power: false, color: "#ffffff"},
+        {id:3, power: false, color: "#ffffff"},
+        {id:4, power: false, color: "#ffffff"}
+      ],
+      rooms: [
+        {name: '货仓1', lights: '0,1', power: false, color: '#ffffff'},
+        {name: '货仓2', lights: '2,3', power: false, color: '#ffffff'},
+      ]
+    },
+    methods:{
+      roomOnOff: function (index, power){
         let this_ = this;
+        power = power || ! this.rooms[index].power;
+        let color = this.rooms[index].color;
+        let lights = this.rooms[index].lights;
+        let data = {lights: lights, power: power, color: color};
         $.ajax({
           url:'/room',
           method:'POST',
@@ -129,7 +176,44 @@
           success: function (result){
             console.log(result)
             if (result.success){
-              this_.rooms[roomId].light=light;
+              this_.rooms[index].power=power;
+              this_.loadLights();
+            } else {
+              console.log("开灯失败");
+            }
+          }
+        });
+      },
+      loadLights: function (){
+        let this_ = this;
+        $.ajax({
+          url:'/lights',
+          method:'GET',
+          dataType: 'JSON',
+          success: function (result){
+            console.log(result)
+            for(let i = 0; i<result.length; i++){
+              let light = result[i];
+              light.color = "#"+padding(light.color);
+            }
+            this_.lights = result;
+          }
+        });
+      },
+      lightOnOff: function (id, power){
+        let color = this.lights[id].color;
+        power = power || ! this.lights[id].power;
+        let data = {id:id, power:power, color: color};
+        let this_ = this;
+        $.ajax({
+          url:'/light',
+          method:'POST',
+          data: data,
+          dataType: 'JSON',
+          success: function (result){
+            console.log(result)
+            if (result.success){
+              this_.lights[id].power=power;
             } else {
               console.log("开灯失败");
             }
@@ -138,9 +222,13 @@
       }
     },
     created: function (){
-      this.loadRooms();
+      this.loadLights();
     }
   });
+  function padding(str){
+    str += '000000'+str;
+    return str.substring(str.length - 6);
+  }
 </script>
 </body>
 </html>
