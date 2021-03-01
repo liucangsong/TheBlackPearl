@@ -12,11 +12,11 @@
 
 CRGBArray<LED_COUNT> leds;
 
-const char* ssid = "Robin+"; 
-const char* password = "94xiaoshu"; 
+const char* ssid = "409wifi"; 
+const char* password = "tarena_2019"; 
 
-IPAddress Ip(192,168,5,10); 
-IPAddress Gateway(192,168,5,1); 
+IPAddress Ip(192,168,13,200); 
+IPAddress Gateway(192,168,13,1); 
 IPAddress Subnet(255,255,255,0); 
 
 uint8_t bright = 100; // 灯泡亮度 (0 - 255) 255 最大
