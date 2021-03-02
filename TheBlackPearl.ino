@@ -3,6 +3,10 @@
 #include <FS.h>
 #include <FastLED.h>
 #include <ArduinoJson.h>
+// #include <DFRobotDFPlayerMini.h>
+#include "SoftwareSerial.h"
+#include "DFRobotDFPlayerMini.h"
+
 
 #define DEBUG 1
 
@@ -10,28 +14,69 @@
 #define LED_COUNT 10 //灯泡数量
 #define LED_DT 4    //D2 PIN 接线位置，Arduino 位置4对应D2 
 
+
 CRGBArray<LED_COUNT> leds;
 
-const char* ssid = "409wifi"; 
-const char* password = "tarena_2019"; 
+const char* ssid = "Robin+"; 
+const char* password = "94xiaoshu"; 
 
-IPAddress Ip(192,168,13,200); 
-IPAddress Gateway(192,168,13,1); 
+IPAddress Ip(192,168,5,10); 
+IPAddress Gateway(192,168,5,1); 
 IPAddress Subnet(255,255,255,0); 
 
 uint8_t bright = 100; // 灯泡亮度 (0 - 255) 255 最大
 
 ESP8266WebServer server(80);
 
+
+//MP3 Player
+#define changeMusic 60000
+#define changeLight 15000
+
+SoftwareSerial mySoftwareSerial(D6, D5); // RX, TX
+DFRobotDFPlayerMini myDFPlayer;
+void printDetail(uint8_t type, int value);
+ 
+static unsigned long timerMusic;
+static unsigned long timerLight;
+
+
 uint8_t rainbowhue = 200;
 boolean rainbow = true;
 
 void setup() {
+
   Serial.begin(9600); 
+  mySoftwareSerial.begin(9600);
+
+  Serial.println();
+  Serial.println(F("DFRobot DFPlayer Mini Demo"));
+  Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
+   
+  if (!myDFPlayer.begin(mySoftwareSerial)) {
+    Serial.println(F("Unable to begin:"));
+    Serial.println(F("1.Please recheck the connection!"));
+    Serial.println(F("2.Please insert the SD card!"));
+    while(true){
+      delay(0); // Code to compatible with ESP8266 watch dog.
+    }
+  }
+  Serial.println(F("DFPlayer Mini online."));
+   
+  myDFPlayer.volume(15);  //Set volume value. From 0 to 30
+  myDFPlayer.play(1);  //Play the first mp3
+  
+  timerMusic = millis();
+  timerLight = millis();
+  
   pinMode(2, OUTPUT); //设置Blink灯
+  pinMode(5, OUTPUT); //设置Blink灯
 
   LEDS.setBrightness(bright); //设置亮度
   LEDS.addLeds<WS2812B, LED_DT, COLOR_ORDER>(leds, LED_COUNT);  // настройки для вашей ленты (ленты на WS2811, WS2812, WS2812B)
+  leds.fill_solid(CRGB::White);
+  LEDS.show();
+  delay(200);
   leds.fill_solid(CRGB::Black);
   LEDS.show();
 
@@ -40,6 +85,7 @@ void setup() {
   Serial.print("WIFI");
 
   while (WiFi.status() != WL_CONNECTED){ 
+    digitalWrite(5, ! digitalRead(5));
     delay(500);
     Serial.print(".");
   }
@@ -79,16 +125,21 @@ void setup() {
   
 }
 
-int r = 0;
-int g = 0;
-int b = 0;
-
-uint8_t room1 = 0;
-uint8_t room2 = 1;
-
 void loop() {
   // Blik 蓝灯，表示主循环在工作
   digitalWrite(2, ! digitalRead(2));
+  digitalWrite(5, ! digitalRead(5));
+
+  if (millis() - timerMusic > changeMusic) {
+    timerMusic = millis();
+    myDFPlayer.next();
+  }
+   
+  if (myDFPlayer.available()) {
+    printDetail(myDFPlayer.readType(), myDFPlayer.read());
+  }
+
+
   server.handleClient();
 
   if(rainbow){
@@ -254,4 +305,60 @@ String getContentType(String filename){
     else if(filename.endsWith(".gz")) return "application/x-gzip";
     return "text/plain";
 
+}
+
+void printDetail(uint8_t type, int value) {
+  switch (type) {
+    case TimeOut:
+      Serial.println(F("Time Out!"));
+      break;
+    case WrongStack:
+      Serial.println(F("Stack Wrong!"));
+      break;
+    case DFPlayerCardInserted:
+      Serial.println(F("Card Inserted!"));
+      break;
+    case DFPlayerCardRemoved:
+      Serial.println(F("Card Removed!"));
+      break;
+    case DFPlayerCardOnline:
+      Serial.println(F("Card Online!"));
+      break;
+    case DFPlayerPlayFinished:
+      Serial.print(F("Number:"));
+      Serial.print(value);
+      Serial.println(F(" Play Finished!"));
+      break;
+    case DFPlayerError:
+      Serial.print(F("DFPlayerError:"));
+      switch (value) {
+        case Busy:
+          Serial.println(F("Card not found"));
+          break;
+        case Sleeping:
+          Serial.println(F("Sleeping"));
+          break;
+        case SerialWrongStack:
+          Serial.println(F("Get Wrong Stack"));
+          break;
+        case CheckSumNotMatch:
+          Serial.println(F("Check Sum Not Match"));
+          break;
+        case FileIndexOut:
+          Serial.println(F("File Index Out of Bound"));
+          break;
+        case FileMismatch:
+          Serial.println(F("Cannot Find File"));
+          break;
+        case Advertise:
+          Serial.println(F("In Advertise"));
+          break;
+        default:
+          break;
+      }
+      break;
+    default:
+      break;
+  }
+ 
 }

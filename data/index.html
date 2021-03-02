@@ -89,12 +89,11 @@
     methods: {
       //总关闭
       lightOff: function (){
-        axios.post("/off", {})
-          .then(function (result){
+        axios.post("/off", {}).then(function (result){
             console.log(result);
             roomsApp.loadLights();
-          }).cache(function (error){
-          console.log(error);
+        }).catch(function (error){
+            console.log(error);
         });
       },
       //设置色温
