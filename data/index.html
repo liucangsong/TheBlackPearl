@@ -41,7 +41,7 @@
 
 <div class="container">
   <div class="boat text-center">
-    <img src="boat_bg.jpg" class="img-fluid">
+    <img src="boat_bg.jpg" class="img-fluid" alt="">
   </div>
 </div>
 
@@ -78,7 +78,7 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
@@ -98,39 +98,29 @@
       },
       //设置色温
       colorTemperature: function (k){
-        $.ajax({
-          url:'/temperature',
-          method:'POST',
-          data: {temperature: k},
-          dataType: 'JSON',
-          success: function (result){
-            console.log(result);
-            roomsApp.loadLights();
-          }
+        let data = {temperature: k};
+        axios.post("/temperature",data)
+        .then(function (result){
+          console.log(result);
+          roomsApp.loadLights();
+        }).catch(function (error){
+          console.log(error);
         });
       },
       //设置亮度
       setBright: function (bright){
-        $.ajax({
-          url:'/bright',
-          method:'POST',
-          data: {bright: bright},
-          dataType: 'JSON',
-          success: function (result){
-            console.log(result);
-          }
+        axios.post("/bright",{bright:bright}).then(function (result){
+          console.log(result);
+        }).catch(function (error){
+          console.log(error);
         });
       },
       rainbow: function (initialhue){
-        $.ajax({
-          url:'/rainbow',
-          method:'POST',
-          data: {initialhue: initialhue},
-          dataType: 'JSON',
-          success: function (result){
-            console.log(result);
-            roomsApp.loadLights();
-          }
+        axios.post('/rainbow',{initialhue: initialhue}).then( function (result){
+          console.log(result);
+          roomsApp.loadLights();
+        }).catch(function (error){
+          console.log(error);
         });
       }
     }
@@ -157,36 +147,29 @@
         let color = this.rooms[index].color;
         let lights = this.rooms[index].lights;
         let data = {lights: lights, power: power, color: color};
-        $.ajax({
-          url:'/room',
-          method:'POST',
-          data: data,
-          dataType: 'JSON',
-          success: function (result){
-            console.log(result)
-            if (result.success){
-              this_.rooms[index].power=power;
-              this_.loadLights();
-            } else {
-              console.log("开灯失败");
-            }
+        axios.post('/room', data).then(function (result){
+          console.log(result)
+          if (result.success){
+            this_.rooms[index].power=power;
+            this_.loadLights();
+          } else {
+            console.log("开灯失败");
           }
+        }).catch(function (error){
+          console.log(error);
         });
       },
       loadLights: function (){
         let this_ = this;
-        $.ajax({
-          url:'/lights',
-          method:'GET',
-          dataType: 'JSON',
-          success: function (result){
-            console.log(result)
-            for(let i = 0; i<result.length; i++){
-              let light = result[i];
-              light.color = "#"+padding(light.color);
-            }
-            this_.lights = result;
+        axios.get('/lights').then( function (result){
+          console.log(result)
+          for(let i = 0; i<result.length; i++){
+            let light = result[i];
+            light.color = "#"+padding(light.color);
           }
+          this_.lights = result;
+        }).catch(function (error){
+          console.log(error);
         });
       },
       lightOnOff: function (id, power){
@@ -194,19 +177,15 @@
         power = power || ! this.lights[id].power;
         let data = {id:id, power:power, color: color};
         let this_ = this;
-        $.ajax({
-          url:'/light',
-          method:'POST',
-          data: data,
-          dataType: 'JSON',
-          success: function (result){
-            console.log(result)
-            if (result.success){
-              this_.lights[id].power=power;
-            } else {
-              console.log("开灯失败");
-            }
+        axios.post("/light", data).then(function (result){
+          console.log(result)
+          if (result.success){
+            this_.lights[id].power=power;
+          } else {
+            console.log("开灯失败");
           }
+        }).catch(function (error){
+          console.log(error);
         });
       }
     },

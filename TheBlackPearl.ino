@@ -33,7 +33,7 @@ ESP8266WebServer server(80);
 #define changeMusic 60000
 #define changeLight 15000
 
-SoftwareSerial mySoftwareSerial(D6, D5); // RX, TX
+SoftwareSerial mySoftwareSerial(D7, D5); // RX-D7-13, TX-D5-14
 DFRobotDFPlayerMini myDFPlayer;
 void printDetail(uint8_t type, int value);
  
@@ -52,7 +52,8 @@ void setup() {
   Serial.println();
   Serial.println(F("DFRobot DFPlayer Mini Demo"));
   Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
-   
+
+  /*
   if (!myDFPlayer.begin(mySoftwareSerial)) {
     Serial.println(F("Unable to begin:"));
     Serial.println(F("1.Please recheck the connection!"));
@@ -60,14 +61,14 @@ void setup() {
     while(true){
       delay(0); // Code to compatible with ESP8266 watch dog.
     }
-  }
+  } */
   Serial.println(F("DFPlayer Mini online."));
    
-  myDFPlayer.volume(15);  //Set volume value. From 0 to 30
-  myDFPlayer.play(1);  //Play the first mp3
+  //myDFPlayer.volume(15);  //Set volume value. From 0 to 30
+  //myDFPlayer.play(1);  //Play the first mp3
   
-  timerMusic = millis();
-  timerLight = millis();
+  //timerMusic = millis();
+  //timerLight = millis();
   
   pinMode(2, OUTPUT); //设置Blink灯
   pinMode(5, OUTPUT); //设置Blink灯
@@ -130,14 +131,14 @@ void loop() {
   digitalWrite(2, ! digitalRead(2));
   digitalWrite(5, ! digitalRead(5));
 
-  if (millis() - timerMusic > changeMusic) {
-    timerMusic = millis();
-    myDFPlayer.next();
-  }
+  //if (millis() - timerMusic > changeMusic) {
+  //  timerMusic = millis();
+  //  myDFPlayer.next();
+  //}
    
-  if (myDFPlayer.available()) {
-    printDetail(myDFPlayer.readType(), myDFPlayer.read());
-  }
+  //if (myDFPlayer.available()) {
+  //  printDetail(myDFPlayer.readType(), myDFPlayer.read());
+  //}
 
 
   server.handleClient();
