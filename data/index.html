@@ -178,7 +178,7 @@
         let data = {id:id, power:power, color: color};
         let this_ = this;
         axios.post("/light", data).then(function (result){
-          console.log(result)
+          console.log(result);
           if (result.success){
             this_.lights[id].power=power;
           } else {
@@ -187,6 +187,19 @@
         }).catch(function (error){
           console.log(error);
         });
+      },
+      seaWave: function (){ //开关海浪声音
+        axios.get("/sound/sea-wave").then(function (result){
+          console.log(result);
+        }).catch(function (error){
+          console.log(error);
+        });
+      },
+      volumeIncrease: function (){ //音量增加
+
+      },
+      volumeReduction: function (){ //音量减少
+
       }
     },
     created: function (){

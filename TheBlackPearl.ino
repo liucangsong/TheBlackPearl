@@ -3,16 +3,17 @@
 #include <FS.h>
 #include <FastLED.h>
 #include <ArduinoJson.h>
-// #include <DFRobotDFPlayerMini.h>
-#include "SoftwareSerial.h"
-#include "DFRobotDFPlayerMini.h"
-
+#include <SoftwareSerial.h>
+#include <DFRobotDFPlayerMini.h>
+#include <WiFiManager.h>  
+#include <DNSServer.h>
+#include <ESP8266WiFi.h>
 
 #define DEBUG 1
 
 #define COLOR_ORDER GRB //灯的排列顺序，灯带 GRB，灯珠 RGB
 #define LED_COUNT 10 //灯泡数量
-#define LED_DT 4    //D2 PIN 接线位置，Arduino 位置4对应D2 
+#define LED_DT D2    //D2 PIN 接线位置，Arduino 位置4对应D2 
 
 
 CRGBArray<LED_COUNT> leds;
@@ -28,51 +29,92 @@ uint8_t bright = 100; // 灯泡亮度 (0 - 255) 255 最大
 
 ESP8266WebServer server(80);
 
-
 //MP3 Player
-#define changeMusic 60000
-#define changeLight 15000
+#define changeMusic 20000
 
 SoftwareSerial mySoftwareSerial(D7, D5); // RX-D7-13, TX-D5-14
-DFRobotDFPlayerMini myDFPlayer;
+DFRobotDFPlayerMini soundPlayer;
 void printDetail(uint8_t type, int value);
  
 static unsigned long timerMusic;
 static unsigned long timerLight;
 
-
 uint8_t rainbowhue = 200;
 boolean rainbow = true;
 
+uint8_t seaSound = 5; //myDFPlayer.loopFolder(5);  大海音效再05文件中， 可以循环播放
+uint8_t canonSound = 5; //ADVERT文件夹中 0005 文件，播放方式：  myDFPlayer.advertise(5); 
+uint8_t cickSound = 3;  //ADVERT文件夹中 0003 文件，播放方式：  myDFPlayer.advertise(3); 
+
+
 void setup() {
 
+  pinMode(D4, OUTPUT); //设置Blink灯
+  pinMode(D1, OUTPUT); //设置Blink灯
+
+  initDfPlayer();
+  initLights();
+  //setupWifi();
+  initWifiServer();
+
+  SPIFFS.begin();
+}
+
+void setupWifi(){
+  WiFiManager wifiManager;
+  wifiManager.resetSettings();
+  wifiManager.autoConnect("TheBlackPearlAP");
+  
+}
+
+void debugPin(){
+  Serial.println();
+  Serial.print(F("D1:"));
+  Serial.println(D1);
+  Serial.print(F("D2:"));
+  Serial.println(D2);
+  Serial.print(F("D3:"));
+  Serial.println(D3);
+  Serial.print(F("D4:"));
+  Serial.println(D4);
+  Serial.print(F("D5:"));
+  Serial.println(D5);
+  Serial.print(F("D6:"));
+  Serial.println(D6);
+  Serial.print(F("D7:"));
+  Serial.println(D7);
+  Serial.print(F("D8:"));
+  Serial.println(D8);
+}
+
+void initDfPlayer(){
   Serial.begin(9600); 
   mySoftwareSerial.begin(9600);
 
-  Serial.println();
   Serial.println(F("DFRobot DFPlayer Mini Demo"));
   Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
 
-  /*
-  if (!myDFPlayer.begin(mySoftwareSerial)) {
-    Serial.println(F("Unable to begin:"));
-    Serial.println(F("1.Please recheck the connection!"));
-    Serial.println(F("2.Please insert the SD card!"));
-    while(true){
-      delay(0); // Code to compatible with ESP8266 watch dog.
-    }
-  } */
+  //soundPlayer.reset();
+  
+  while (!soundPlayer.begin(mySoftwareSerial)) {
+    Serial.print(F("."));
+    digitalWrite(D4, ! digitalRead(D4));
+    soundPlayer.reset();
+    delay(1000); // Code to compatible with ESP8266 watch dog.
+  } 
   Serial.println(F("DFPlayer Mini online."));
    
-  //myDFPlayer.volume(15);  //Set volume value. From 0 to 30
-  //myDFPlayer.play(1);  //Play the first mp3
+  soundPlayer.volume(10);  //Set volume value. From 0 to 30
+  //soundPlayer.play(3);  //Play the first mp3
+  soundPlayer.enableLoop();
+  soundPlayer.loopFolder(seaSound);
   
-  //timerMusic = millis();
+  timerMusic = millis();
   //timerLight = millis();
   
-  pinMode(2, OUTPUT); //设置Blink灯
-  pinMode(5, OUTPUT); //设置Blink灯
+}
 
+void initLights(){
   LEDS.setBrightness(bright); //设置亮度
   LEDS.addLeds<WS2812B, LED_DT, COLOR_ORDER>(leds, LED_COUNT);  // настройки для вашей ленты (ленты на WS2811, WS2812, WS2812B)
   leds.fill_solid(CRGB::White);
@@ -80,13 +122,15 @@ void setup() {
   delay(200);
   leds.fill_solid(CRGB::Black);
   LEDS.show();
+}
 
+void initWifiServer(){
   WiFi.config(Ip, Gateway, Subnet);
   WiFi.begin(ssid, password);
   Serial.print("WIFI");
 
   while (WiFi.status() != WL_CONNECTED){ 
-    digitalWrite(5, ! digitalRead(5));
+    digitalWrite(D1, ! digitalRead(D1)); 
     delay(500);
     Serial.print(".");
   }
@@ -122,24 +166,23 @@ void setup() {
   
   server.begin();
 
-  SPIFFS.begin();
-  
 }
 
 void loop() {
   // Blik 蓝灯，表示主循环在工作
-  digitalWrite(2, ! digitalRead(2));
-  digitalWrite(5, ! digitalRead(5));
+  digitalWrite(D4, ! digitalRead(D4)); // 主板 Blink灯
+  digitalWrite(D1, ! digitalRead(D1)); // 自己添加的 LED 灯
 
   //if (millis() - timerMusic > changeMusic) {
   //  timerMusic = millis();
-  //  myDFPlayer.next();
-  //}
-   
-  //if (myDFPlayer.available()) {
-  //  printDetail(myDFPlayer.readType(), myDFPlayer.read());
+  //  soundPlayer.advertise(canonSound); 
   //}
 
+   
+  if (soundPlayer.available()) {
+    printDetail(soundPlayer.readType(), soundPlayer.read());
+  }
+  
 
   server.handleClient();
 
@@ -150,9 +193,8 @@ void loop() {
     }
     leds.fill_rainbow(rainbowhue);
   }
-
-  delay(20);
   LEDS.show();
+  delay(20);
 }
 
 void handleOff(){
@@ -161,6 +203,9 @@ void handleOff(){
   leds.fill_solid(color);
   //关闭彩虹效果
   rainbow = false;
+
+  soundPlayer.advertise(cickSound); 
+  
   String json = "{\"success\":true}";
   server.send(200, "application/json", json);
 }
@@ -176,6 +221,7 @@ void handleTemperature(){
   }
   leds.fill_solid(color);
   rainbow = false;
+  soundPlayer.advertise(cickSound); 
   String json = "{\"success\":true}";
   server.send(200, "application/json", json);
 }
@@ -184,6 +230,7 @@ void handleBright(){
   bright = server.arg("bright").toInt();
   LEDS.setBrightness(bright);
   String json = "{\"success\":true}";
+  soundPlayer.advertise(cickSound); 
   server.send(200, "application/json", json);
 }
 
@@ -192,6 +239,7 @@ void handleRainbow(){
   rainbowhue = initialhue;
   rainbow = true;
   String json = "{\"success\":true}";
+  soundPlayer.advertise(cickSound); 
   server.send(200, "application/json", json);
 }
 
@@ -212,6 +260,10 @@ void handleLights(){
     light["power"] = rgb==0 ? false : true;
     light["color"] = hex;
   }
+
+  //soundPlayer.reset();
+  //soundPlayer.advertise(cickSound); 
+  
   //将JSON对象序列化为字符串
   String json;
   serializeJson(doc, json);
@@ -244,6 +296,8 @@ void handleRoom() {
     leds[id].setRGB(0,0,0);
   }
 
+  soundPlayer.advertise(cickSound); 
+
   StaticJsonDocument<200> doc; 
   doc["power"] = power;
   doc["success"] = true;
@@ -266,6 +320,8 @@ void handleLight() {
   }else{
     leds[id].setRGB(0,0,0);
   }
+
+  soundPlayer.advertise(cickSound); 
 
   StaticJsonDocument<200> doc; // <- 200 bytes in the heap
   doc["power"] = power;
