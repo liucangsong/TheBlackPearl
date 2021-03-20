@@ -12,9 +12,8 @@
 #define DEBUG 1
 
 #define COLOR_ORDER GRB //灯的排列顺序，灯带 GRB，灯珠 RGB
-#define LED_COUNT 10 //灯泡数量
+#define LED_COUNT 30 //灯泡数量
 #define LED_DT D2    //D2 PIN 接线位置，Arduino 位置4对应D2 
-
 
 CRGBArray<LED_COUNT> leds;
 
@@ -29,28 +28,27 @@ uint8_t bright = 100; // 灯泡亮度 (0 - 255) 255 最大
 
 ESP8266WebServer server(80);
 
-//MP3 Player
-#define changeMusic 20000
-
 SoftwareSerial mySoftwareSerial(D7, D5); // RX-D7-13, TX-D5-14
 DFRobotDFPlayerMini soundPlayer;
 void printDetail(uint8_t type, int value);
- 
-static unsigned long timerMusic;
-static unsigned long timerLight;
 
 uint8_t rainbowhue = 200;
 boolean rainbow = true;
 
-uint8_t seaSound = 5; //myDFPlayer.loopFolder(5);  大海音效再05文件中， 可以循环播放
-uint8_t canonSound = 5; //ADVERT文件夹中 0005 文件，播放方式：  myDFPlayer.advertise(5); 
-uint8_t cickSound = 3;  //ADVERT文件夹中 0003 文件，播放方式：  myDFPlayer.advertise(3); 
+uint8_t seaSound = 5; //soundPlayer.loopFolder(seaSound);  大海音效再05文件中， 可以循环播放
+uint8_t canonSound = 5; //ADVERT文件夹中 0005 文件，播放方式：  soundPlayer.advertise(canonSound); 
+uint8_t cickSound = 3;  //ADVERT文件夹中 0003 文件，播放方式：  soundPlayer.advertise(cickSound); 
 
+uint8_t resetTimeout = 6000;
+uint8_t resetCount = 0;
+#define WIFI_RESET D6 
 
 void setup() {
 
   pinMode(D4, OUTPUT); //设置Blink灯
   pinMode(D1, OUTPUT); //设置Blink灯
+
+  pinMode(WIFI_RESET, INPUT);
 
   initDfPlayer();
   initLights();
@@ -60,11 +58,46 @@ void setup() {
   SPIFFS.begin();
 }
 
+void loop() {
+  // Blik 蓝灯，表示主循环在工作
+  digitalWrite(D4, ! digitalRead(D4)); // 主板 Blink灯
+
+  handleResetWifiButton();
+   
+  if (soundPlayer.available()) {
+    printDetail(soundPlayer.readType(), soundPlayer.read());
+  }
+
+  server.handleClient();
+
+  if(rainbow){
+    rainbowhue++;
+    if(rainbowhue==255){
+      rainbowhue=0;
+    }
+    leds.fill_rainbow(rainbowhue);
+  }
+  LEDS.show();
+  delay(20);
+}
+
+void handleResetWifiButton(){
+  if (digitalRead(WIFI_RESET) == HIGH) {
+    digitalWrite(D1, ! digitalRead(D1)); // 自己添加的 LED 灯
+    resetCount+=20;
+    if(resetCount > resetTimeout){
+      resetCount = 0;
+      setupWifi();
+    }
+  } else {
+    resetCount = 0;
+  }
+}
+
 void setupWifi(){
   WiFiManager wifiManager;
   wifiManager.resetSettings();
   wifiManager.autoConnect("TheBlackPearlAP");
-  
 }
 
 void debugPin(){
@@ -93,8 +126,6 @@ void initDfPlayer(){
 
   Serial.println(F("DFRobot DFPlayer Mini Demo"));
   Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
-
-  //soundPlayer.reset();
   
   while (!soundPlayer.begin(mySoftwareSerial)) {
     Serial.print(F("."));
@@ -105,13 +136,8 @@ void initDfPlayer(){
   Serial.println(F("DFPlayer Mini online."));
    
   soundPlayer.volume(10);  //Set volume value. From 0 to 30
-  //soundPlayer.play(3);  //Play the first mp3
   soundPlayer.enableLoop();
   soundPlayer.loopFolder(seaSound);
-  
-  timerMusic = millis();
-  //timerLight = millis();
-  
 }
 
 void initLights(){
@@ -163,38 +189,47 @@ void initWifiServer(){
   
   //整体关闭
   server.on("/off", handleOff);
+
+  //海浪声音开关
+  server.on("/sound/play", handlePlay);
+
+  //海浪声音开关
+  server.on("/sound/pause", handlePause);
+  
+  //音量增加
+  server.on("/volume/up", handleVolumeUp);
+
+  //音量减少
+  server.on("/volume/down", handleVolumeDown);
+
+  //开炮
+  server.on("/sound/open-fire", handleOpenFire);
   
   server.begin();
 
 }
 
-void loop() {
-  // Blik 蓝灯，表示主循环在工作
-  digitalWrite(D4, ! digitalRead(D4)); // 主板 Blink灯
-  digitalWrite(D1, ! digitalRead(D1)); // 自己添加的 LED 灯
+void handleOpenFire(){
+  soundPlayer.advertise(canonSound); 
+}
 
-  //if (millis() - timerMusic > changeMusic) {
-  //  timerMusic = millis();
-  //  soundPlayer.advertise(canonSound); 
-  //}
+void handleVolumeUp(){
+  soundPlayer.volumeUp();
+}
 
-   
-  if (soundPlayer.available()) {
-    printDetail(soundPlayer.readType(), soundPlayer.read());
-  }
-  
+void handleVolumeDown(){
+  soundPlayer.volumeDown();
+}
 
-  server.handleClient();
+/**
+ * 播放/关闭大海的音效
+ */
+void handlePlay(){
+  soundPlayer.play();
+}
 
-  if(rainbow){
-    rainbowhue++;
-    if(rainbowhue==255){
-      rainbowhue=0;
-    }
-    leds.fill_rainbow(rainbowhue);
-  }
-  LEDS.show();
-  delay(20);
+void handlePause(){
+  soundPlayer.pause();
 }
 
 void handleOff(){

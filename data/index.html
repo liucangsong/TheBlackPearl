@@ -188,18 +188,40 @@
           console.log(error);
         });
       },
-      seaWave: function (){ //开关海浪声音
-        axios.get("/sound/sea-wave").then(function (result){
+      seaWavePlay: function (){ //开关海浪声音
+        axios.get("/sound/play").then(function (result){
           console.log(result);
         }).catch(function (error){
           console.log(error);
         });
       },
-      volumeIncrease: function (){ //音量增加
-
+      seaWavePause: function (){ //开关海浪声音
+        axios.get("/sound/pause").then(function (result){
+          console.log(result);
+        }).catch(function (error){
+          console.log(error);
+        });
       },
-      volumeReduction: function (){ //音量减少
-
+      volumeUp: function (){ //音量增加
+        axios.get("/volume/up").then(function (result){
+          console.log(result);
+        }).catch(function (error){
+          console.log(error);
+        });
+      },
+      volumeDown: function (){ //音量减少
+        axios.get("/volume/down").then(function (result){
+          console.log(result);
+        }).catch(function (error){
+          console.log(error);
+        });
+      },
+      openFire: function (){ //开炮
+        axios.get("/sound/open-fire").then(function (result){
+          console.log(result);
+        }).catch(function (error){
+          console.log(error);
+        });
       }
     },
     created: function (){
