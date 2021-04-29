@@ -45,31 +45,38 @@ uint8_t resetCount = 0;
 
 void setup() {
 
+  Serial.begin(9600); 
+  Serial.print("OK");
+  debugPin();
+
   pinMode(D4, OUTPUT); //设置Blink灯
   pinMode(D1, OUTPUT); //设置Blink灯
 
-  pinMode(WIFI_RESET, INPUT);
+  //pinMode(WIFI_RESET, INPUT);
 
-  initDfPlayer();
-  initLights();
+  //wifiManager.resetSettings();
   //setupWifi();
-  initWifiServer();
 
-  SPIFFS.begin();
+  //initDfPlayer();
+  //initLights();
+  //setupWifi();
+  //initWifiServer();
+
+  //SPIFFS.begin();
 }
 
 void loop() {
   // Blik 蓝灯，表示主循环在工作
   digitalWrite(D4, ! digitalRead(D4)); // 主板 Blink灯
 
-  handleResetWifiButton();
+ // handleResetWifiButton();
    
-  if (soundPlayer.available()) {
-    printDetail(soundPlayer.readType(), soundPlayer.read());
-  }
+  //if (soundPlayer.available()) {
+  //  printDetail(soundPlayer.readType(), soundPlayer.read());
+  //}
 
-  server.handleClient();
-
+  //server.handleClient();
+/*
   if(rainbow){
     rainbowhue++;
     if(rainbowhue==255){
@@ -78,6 +85,7 @@ void loop() {
     leds.fill_rainbow(rainbowhue);
   }
   LEDS.show();
+  */
   delay(20);
 }
 
@@ -121,7 +129,7 @@ void debugPin(){
 }
 
 void initDfPlayer(){
-  Serial.begin(9600); 
+  
   mySoftwareSerial.begin(9600);
 
   Serial.println(F("DFRobot DFPlayer Mini Demo"));
@@ -138,6 +146,7 @@ void initDfPlayer(){
   soundPlayer.volume(10);  //Set volume value. From 0 to 30
   soundPlayer.enableLoop();
   soundPlayer.loopFolder(seaSound);
+  soundPlayer.pause();
 }
 
 void initLights(){
