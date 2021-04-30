@@ -11,9 +11,9 @@
 
 #define DEBUG 1
 
-#define COLOR_ORDER GRB //灯的排列顺序，灯带 GRB，灯珠 RGB
+#define COLOR_ORDER RGB //GRB //灯的排列顺序，灯带 GRB，灯珠 RGB
 #define LED_COUNT 30 //灯泡数量
-#define LED_DT D2    //D2 PIN 接线位置，Arduino 位置4对应D2 
+#define LED_DT 4    //D2 PIN 接线位置，Arduino 位置4对应D2 
 
 CRGBArray<LED_COUNT> leds;
 
@@ -47,10 +47,12 @@ void setup() {
 
   Serial.begin(9600); 
   Serial.print("OK");
-  debugPin();
+  //debugPin();
 
-  pinMode(D4, OUTPUT); //设置Blink灯
-  pinMode(D1, OUTPUT); //设置Blink灯
+   pinMode(LED_BUILTIN, OUTPUT);
+
+  //pinMode(D4, OUTPUT); //设置Blink灯
+  //pinMode(D1, OUTPUT); //设置Blink灯
 
   //pinMode(WIFI_RESET, INPUT);
 
@@ -58,7 +60,7 @@ void setup() {
   //setupWifi();
 
   //initDfPlayer();
-  //initLights();
+  initLights();
   //setupWifi();
   //initWifiServer();
 
@@ -67,7 +69,7 @@ void setup() {
 
 void loop() {
   // Blik 蓝灯，表示主循环在工作
-  digitalWrite(D4, ! digitalRead(D4)); // 主板 Blink灯
+  digitalWrite(LED_BUILTIN, ! digitalRead(LED_BUILTIN)); // 主板 Blink灯
 
  // handleResetWifiButton();
    
@@ -76,7 +78,7 @@ void loop() {
   //}
 
   //server.handleClient();
-/*
+
   if(rainbow){
     rainbowhue++;
     if(rainbowhue==255){
@@ -85,7 +87,7 @@ void loop() {
     leds.fill_rainbow(rainbowhue);
   }
   LEDS.show();
-  */
+ 
   delay(20);
 }
 
@@ -154,9 +156,11 @@ void initLights(){
   LEDS.addLeds<WS2812B, LED_DT, COLOR_ORDER>(leds, LED_COUNT);  // настройки для вашей ленты (ленты на WS2811, WS2812, WS2812B)
   leds.fill_solid(CRGB::White);
   LEDS.show();
+  digitalWrite(LED_BUILTIN, ! digitalRead(LED_BUILTIN));
   delay(200);
   leds.fill_solid(CRGB::Black);
   LEDS.show();
+  Serial.println("initLights()");
 }
 
 void initWifiServer(){
