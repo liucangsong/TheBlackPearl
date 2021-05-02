@@ -17,18 +17,19 @@
 
 CRGBArray<LED_COUNT> leds;
 
-const char* ssid = "Robin+"; 
-const char* password = "94xiaoshu"; 
+const char* ssid = "Xiloer'home"; //"Robin+"; 
+const char* password = "Fhf838408"; 
 
-IPAddress Ip(192,168,5,10); 
-IPAddress Gateway(192,168,5,1); 
+IPAddress Ip(192,168,2,188); 
+IPAddress Gateway(192,168,2,1); 
 IPAddress Subnet(255,255,255,0); 
 
 uint8_t bright = 100; // 灯泡亮度 (0 - 255) 255 最大
 
 ESP8266WebServer server(80);
 
-SoftwareSerial mySoftwareSerial(D7, D5); // RX-D7-13, TX-D5-14
+//设置DFPlayer
+SoftwareSerial mySoftwareSerial(D7,D5); // RX-D7, TX-D5
 DFRobotDFPlayerMini soundPlayer;
 void printDetail(uint8_t type, int value);
 
@@ -49,7 +50,7 @@ void setup() {
   Serial.print("OK");
   //debugPin();
 
-   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
 
   //pinMode(D4, OUTPUT); //设置Blink灯
   //pinMode(D1, OUTPUT); //设置Blink灯
@@ -59,12 +60,13 @@ void setup() {
   //wifiManager.resetSettings();
   //setupWifi();
 
-  //initDfPlayer();
+  initWifiServer();
+  initDfPlayer();
   initLights();
   //setupWifi();
-  //initWifiServer();
-
-  //SPIFFS.begin();
+  
+  //启动文件系统功能
+  SPIFFS.begin();
 }
 
 void loop() {
@@ -73,11 +75,11 @@ void loop() {
 
  // handleResetWifiButton();
    
-  //if (soundPlayer.available()) {
-  //  printDetail(soundPlayer.readType(), soundPlayer.read());
-  //}
+  if (soundPlayer.available()) {
+    printDetail(soundPlayer.readType(), soundPlayer.read());
+  }
 
-  //server.handleClient();
+  server.handleClient();
 
   if(rainbow){
     rainbowhue++;
@@ -139,7 +141,8 @@ void initDfPlayer(){
   
   while (!soundPlayer.begin(mySoftwareSerial)) {
     Serial.print(F("."));
-    digitalWrite(D4, ! digitalRead(D4));
+    //digitalWrite(D4, ! digitalRead(D4));
+    digitalWrite(LED_BUILTIN, ! digitalRead(LED_BUILTIN));
     soundPlayer.reset();
     delay(1000); // Code to compatible with ESP8266 watch dog.
   } 
@@ -169,7 +172,8 @@ void initWifiServer(){
   Serial.print("WIFI");
 
   while (WiFi.status() != WL_CONNECTED){ 
-    digitalWrite(D1, ! digitalRead(D1)); 
+    //digitalWrite(D1, ! digitalRead(D1)); 
+    digitalWrite(LED_BUILTIN, ! digitalRead(LED_BUILTIN));
     delay(500);
     Serial.print(".");
   }
