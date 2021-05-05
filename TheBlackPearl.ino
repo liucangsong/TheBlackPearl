@@ -60,8 +60,8 @@ void setup() {
   //wifiManager.resetSettings();
   //setupWifi();
 
-  initWifiServer();
-  initDfPlayer();
+  //initWifiServer();
+  //initDfPlayer();
   initLights();
   //setupWifi();
   
@@ -75,11 +75,11 @@ void loop() {
 
  // handleResetWifiButton();
    
-  if (soundPlayer.available()) {
-    printDetail(soundPlayer.readType(), soundPlayer.read());
-  }
+  //if (soundPlayer.available()) {
+  //  printDetail(soundPlayer.readType(), soundPlayer.read());
+  //}
 
-  server.handleClient();
+  //server.handleClient();
 
   if(rainbow){
     rainbowhue++;
@@ -264,13 +264,17 @@ void handleOff(){
 
 void handleTemperature(){
   int k = server.arg("temperature").toInt();
+  Serial.println(k);
   CRGB color;
   if(k==2600){
     color = CRGB(ColorTemperature::Candle);
+   
   }
   if(k==6000){
-    color = CRGB(ColorTemperature::DirectSunlight);
+    //color = CRGB(ColorTemperature::DirectSunlight);
+    color = CRGB::White;
   }
+  //color = ColorTemperature::Tungsten40W;
   leds.fill_solid(color);
   rainbow = false;
   soundPlayer.advertise(cickSound); 

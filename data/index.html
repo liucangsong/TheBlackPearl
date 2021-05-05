@@ -114,8 +114,8 @@
       },
       //设置色温
       colorTemperature: function (k){
-        let data = {temperature: k};
-        axios.post("/temperature",data)
+        //let data = {temperature: k};
+        axios.post("/temperature",{temperature: k})
         .then(function (result){
           console.log(result);
           roomsApp.loadLights();
